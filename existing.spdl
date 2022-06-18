@@ -1,0 +1,67 @@
+hashfunction H1;
+usertype ShSecret;
+usertype SessionKey;
+protocol ExistingMethod(MTCD,gateway,HSS) {
+role MTCD {
+	fresh Imsi: Nonce;
+	fresh Rand: Nonce;
+	fresh  Gid: Nonce;
+	fresh GrpKey;
+	var seskey;
+	var Rhss;
+	send_1(MTCD,gateway,{Imsi,Rand,Gid}GrpKey(MTCD,gateway) );
+	send_2(MTCD,gateway,H1(Imsi,Rand,Gid));
+	recv_6(gateway,MTCD,{Rhss}GrpKey(gateway,MTCD) );
+	recv_8(gateway,MTCD,{seskey}GrpKey(gateway,MTCD) );
+	claim_mtcd1(MTCD,Secret,Imsi);
+	claim_mtcd2(MTCD,Secret,Rand);
+	claim_mtcd2(MTCD,Secret,seskey);
+	}
+role gateway {
+		var Imsi;
+		 var Rand;
+		var Rhss;
+		fresh snid:Nonce;  //serving-network-identity
+		var Gid;
+		var seskey;
+		var GrpKey;
+		recv_1(MTCD,gateway,{Imsi,Rand,Gid}GrpKey(MTCD,gateway) );
+		recv_2(MTCD,gateway,H1(Imsi,Rand,Gid));
+
+		send_3(gateway,HSS,H1(Imsi,Rand,Gid) );
+		send_4(gateway,HSS,{Imsi,Rand,Gid,snid}GrpKey(gateway,HSS));
+
+
+		recv_5(HSS,gateway,{Rhss}GrpKey(HSS,gateway) );
+
+		send_6(gateway,MTCD,{Rhss}GrpKey(gateway,MTCD) );
+
+		recv_7(HSS,gateway,{seskey}GrpKey(HSS,gateway));
+
+		send_8(gateway,MTCD,{seskey}GrpKey(gateway,MTCD) );
+
+		claim_gateway1(gateway,Secret,Rand);
+		claim_gateway2(gateway,Secret,Imsi);
+		claim_gateway3(gateway,Secret,snid);
+		claim_gateway4(gateway,Secret,seskey);
+		}
+role HSS{
+			fresh Rhss:Ticket;
+			var snid;
+			var Imsi;
+			var Rand;
+			var Gid;
+			fresh seskey: SessionKey;
+			fresh GrpKey: Nonce;
+			
+			recv_3(gateway,HSS,H1(Imsi,Rand,Gid));
+			recv_4(gateway,HSS,{Imsi,Rand,Gid,snid}GrpKey(gateway,HSS));
+
+
+			send_5(HSS,gateway,{Rhss}GrpKey(HSS,gateway));
+			send_7(HSS,gateway,{seskey}GrpKey(HSS,gateway));
+			claim_HSS1(HSS,Secret,Rhss);
+			claim_HSS2(HSS,Secret,Rand);
+			claim_HSS3(HSS,Secret,seskey);
+			}
+}
