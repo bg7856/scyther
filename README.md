@@ -1,2 +1,2 @@
 # scyther
-hierarchical authentication in M2M
+hierarchical authentication in MTCD Devices
